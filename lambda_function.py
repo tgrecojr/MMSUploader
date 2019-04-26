@@ -29,8 +29,8 @@ def lambda_handler(event, context):
         )
         if request_valid:
             num_media = event['NumMedia']
-            picture_bucket = "grecoderbyday-source"
-            text_bucket = "grecoderbyday-messages"
+            picture_bucket = os.environ['PICTURE_BUCKET']
+            text_bucket = os.environ['TEXT_BUCKET']
             if num_media != '0':
                 from_number = event['From']
                 int_nummedia = int(num_media)
@@ -41,25 +41,25 @@ def lambda_handler(event, context):
                     twilio_pic = urllib.request.Request(decoded_pic, headers={'User-Agent': "Magic Browser"})
                     image = urllib.request.urlopen(twilio_pic)
                     rand_uuid = str(uuid.uuid4())
-                    picture_key = "pics/original/2019/" + rand_uuid + ".png"
-                    text_key = "messages/" + rand_uuid + ".txt"
+                    picture_key = os.environ['PICTURE_KEY'] + rand_uuid + ".png"
+                    text_key = os.environ['TEXT_KEY'] + rand_uuid + ".txt"
                     resp_url = "https://s3-us-east-1.amazonaws.com/{0}/{1}".format(picture_bucket, str(picture_key))
                     m_data = {'fromNumber': from_number, 'url': resp_url}
                     s3.Bucket(picture_bucket).put_object(Key=picture_key, Body=image.read(), ACL='public-read', ContentType='image/png', Metadata=m_data)
                     s3.Bucket(text_bucket).put_object(Key=text_key, Body=str(event), ACL='private',ContentType='text/plain', Metadata=m_data)   
-                return_xml = '<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Message>Thank you for your submission.  Visit https://grecoderbyday.com to view images</Message></Response>'
+                return_xml = os.environ['RETURN_XML']
                 print(return_xml)
                 return return_xml
             else:
-                success_xml = '<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Message>No image found.  Please attach an image.</Message></Response>'
-                print(success_xml)
-                return success_xml
+                no_image_xml = os.environ['NO_IMAGE_XML']
+                print(no_image_xml)
+                return no_image_xml
         else:
             print("Request is invalid")
-            return_error_xml = '<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Message>Sorry Dave, I cannot do that.</Message></Response>'
-            return return_error_xml
+            invalid_request_xml = os.environ['INVALID_REQUEST_XML']
+            return invalid_request_xml
 
     else:
-        return_message = '<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Message>Hell No</Message></Response>'
-        return return_message
+        no_signature_xml = os.environ['NO_SIGNATURE_XML']
+        return no_signature_xml
 
